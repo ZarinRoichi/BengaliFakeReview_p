@@ -55,6 +55,4 @@ The work is built on the [Bengali Fake Review Dataset](https://huggingface.co/da
 👉 Ensemble (Weighted Soft Vote) slightly improved robustness (F1 = 97.56%).  
 👉 Prompt-only LLMs underperformed compared to fine-tuned models.  
 
----
 
-## 📂 Repository Structure
