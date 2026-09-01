@@ -14,7 +14,7 @@ The study compares **seven methodological paradigms**:
 - Ensemble learning
 - Provider-hosted/API-based LLM evaluation
 
-The study investigates how **task-specific adaptation, model architecture, prompting strategy, model scale, and evaluation distribution** affect Bengali fake-review classification.
+The study investigates how **task-specific adaptation, task formulation, model architecture, prompting strategy, model scale, and evaluation distribution** affect Bengali fake-review classification.
 
 A second objective is to determine whether strong results obtained under a balanced benchmark remain robust under a stricter, prevalence-preserving evaluation protocol with stronger leakage controls.
 
@@ -244,4 +244,4 @@ This repository provides implementation and experimental code for research and e
 
 ## 📝 Research Status
 
-The experimental study has been completed and the associated manuscript has been prepared for submission.
+The experimental study has been completed, and the associated manuscript has been prepared for submission.
