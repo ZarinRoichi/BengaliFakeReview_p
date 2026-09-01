@@ -1,119 +1,247 @@
 # Bengali Fake Review Detection 📝
 
 ## 📌 Overview
+
 This repository contains the implementation and experimental pipeline for a comprehensive **Bengali fake review detection benchmark** built on the [Bengali Fake Review Dataset](https://huggingface.co/datasets/shawon95/Bengali-Fake-Review-Dataset).
 
-The study compares multiple modeling paradigms, including:
+The study compares **seven methodological paradigms**:
 
-- Supervised transformer encoders
-- Parameter-efficient LLM fine-tuning
-- Discriminative classification-head adaptation
+- Supervised transformer classification
+- Transformer-based prompt and few-shot adaptation
+- Parameter-efficient LLM sequence classification
 - Generative label prediction
-- Zero-shot and few-shot prompting
-- Prompt sensitivity analysis
+- Prompt-only open-source LLM inference
 - Ensemble learning
 - Provider-hosted/API-based LLM evaluation
 
-The main objective is not only to identify the best-performing model, but also to examine how different adaptation and prompting strategies affect reliability and generalization in Bengali fake review classification.
+The study investigates how **task-specific adaptation, model architecture, prompting strategy, model scale, and evaluation distribution** affect Bengali fake-review classification.
 
-⚠️ **License Notice**
-- The original dataset is licensed under **CC BY-NC-ND 4.0**.
-- The dataset itself is **not redistributed** in this repository.
-- Only preprocessing, augmentation, splitting, training, and evaluation code is provided.
-- This repository is intended strictly for **research and educational purposes**.
+A second objective is to determine whether strong results obtained under a balanced benchmark remain robust under a stricter, prevalence-preserving evaluation protocol with stronger leakage controls.
 
 ---
 
-## ⚙️ Experimental Workflow
+## 🔬 Experimental Design
 
-### 1. Data Splitting
-- The original dataset is first divided using a stratified **80/10/10 train/validation/test split**.
-- A fixed random seed is used for reproducibility.
-- Validation and test sets remain unchanged throughout the experiments.
+The study uses two complementary evaluation protocols.
 
-### 2. Training-Set Processing
-All augmentation and balancing operations are applied **only to the training split**.
+### 1. Balanced-Corpus Protocol
 
-#### FAKE-class augmentation
-- Random punctuation modification
-- Character swaps
-- Thin-space insertion
+This protocol supports broad comparison across all methodological families.
 
-#### NON-FAKE balancing
-- Training-only undersampling is used to obtain an approximately balanced class distribution.
+- Fake-class augmentation and Non-Fake undersampling are performed before partitioning.
+- Final corpus size: **12,506 reviews**
+- Training: **10,004**
+- Validation: **1,251**
+- Test: **1,251**
+- Test distribution is approximately balanced.
 
-### 3. Model Training and Evaluation
+This protocol is used primarily for broad methodological benchmarking.
 
-The benchmark evaluates several methodological settings:
+### 2. Prevalence-Preserving Locked Protocol
 
-#### Supervised Encoders
-Fine-tuned transformer-based classification models are used as supervised baselines.
+This protocol provides a stricter confirmatory evaluation.
 
-#### Parameter-Efficient LLM Adaptation
-LLMs are adapted using techniques such as **LoRA/QLoRA** for efficient task-specific training.
+- Exact duplicates are removed before partitioning.
+- Highly similar reviews are grouped using character-level TF-IDF similarity.
+- Near-duplicate groups are kept within the same partition.
+- Augmentation and undersampling are restricted to the training set.
+- Validation and test sets remain untouched and preserve the original class prevalence.
 
-#### Discriminative LLM Classification
-LLMs are fine-tuned with classification heads for direct FAKE/NON-FAKE prediction.
+Final partitions:
 
-#### Generative Label Prediction
-Causal language models are trained or prompted to generate the target class label.
+| Partition | Fake | Non-Fake | Total |
+|---|---:|---:|---:|
+| Training | 5,345 | 5,345 | 10,690 |
+| Validation | 134 | 770 | 904 |
+| Locked Test | 134 | 770 | 904 |
 
-#### Prompt-Based Evaluation
-Open-source and hosted LLMs are evaluated under **zero-shot and few-shot prompting** settings.
-
-#### Prompt Sensitivity
-Alternative prompt formulations are tested to analyze how instruction wording influences model predictions.
-
-#### Ensemble Learning
-Predictions from multiple models are combined to evaluate whether ensemble strategies improve robustness and overall performance.
-
-#### API-Based LLM Evaluation
-Provider-hosted LLMs are evaluated using controlled prompts and consistent test samples.
+The locked test is not used for model selection, prompt development, threshold tuning, or hyperparameter optimisation.
 
 ---
 
-## 📊 Evaluation Protocol
+## ⚙️ Methods
 
-The experiments are designed to reduce data leakage and ensure consistent comparison across models.
+### Supervised Transformer Encoders
 
-- Training-only augmentation and balancing
-- Clean validation and test partitions
-- Fixed random seed
-- Consistent preprocessing across methods
-- Identical held-out samples for model comparison
-- Weighted F1 used as a primary comparison metric
-- Additional evaluation under a prevalence-preserving locked test setting
+Supervised classification experiments include Bengali-specific and multilingual transformer models such as:
+
+- BanglaBERT
+- XLM-R
+- mBERT
+
+The models are fine-tuned using binary classification heads.
+
+### Transformer Prompt and Few-Shot Adaptation
+
+Multiple prompt-based strategies are evaluated, including:
+
+- Few-shot classification
+- Zero-shot prompting
+- Manual prompt fine-tuning
+- Demonstration-augmented prompting
+- Lightweight automatic prompt search
+- LM-BFF-style template generation
+- AutoPrompt-style trigger search
+
+### Parameter-Efficient LLM Classification
+
+Bengali-specialised causal LLMs are adapted using **QLoRA** with sequence-classification heads.
+
+Evaluated model families include:
+
+- TituLLM
+- TigerLLM
+- BanglaLLaMA
+- Bangla-Qwen variants
+
+### Generative Label Prediction
+
+The same causal LLM families are also evaluated using a generative formulation:
+
+`Instruction + Review → Fake / Non-Fake label`
+
+This enables a direct comparison between **discriminative classification-head adaptation** and **generative label prediction**.
+
+### Prompt-Only Open-Source LLM Evaluation
+
+Open-source LLMs are evaluated without task-specific parameter updates under:
+
+- Zero-shot prompting
+- Few-shot prompting
+- Exploratory revised prompts
+- Candidate-label scoring
+
+The revised-prompt experiments are treated as **post-hoc prompt-sensitivity analyses** rather than independently selected benchmark configurations.
+
+### Ensemble Learning
+
+Four Bengali-adapted LLM classifiers are combined using:
+
+- Majority voting
+- Equal-weight soft voting
+- Logistic-regression stacking
+
+### Provider-Hosted LLM Evaluation
+
+Several remotely hosted LLMs are evaluated through APIs using a common zero-shot classification setup.
+
+The experiments record:
+
+- Exact model identifiers
+- Prompts
+- Decoding settings
+- Raw responses
+- Retry behaviour
+- Token settings
+- Parsed predictions
+- Generation timestamps
 
 ---
 
-## 🔍 Research Focus
+## 📊 Evaluation Metrics
 
-The project investigates several questions beyond standard classification accuracy:
+The study reports:
 
-- How do supervised encoders compare with adapted LLMs?
-- Does task-specific LLM adaptation outperform prompt-only inference?
-- How do discriminative and generative adaptation strategies differ?
-- How sensitive are LLM predictions to prompt wording?
-- Do ensemble methods provide consistent improvements?
-- How well do models generalize under a more realistic class distribution?
+- Accuracy
+- Weighted Precision
+- Weighted Recall
+- Weighted F1
+- Macro F1
+- Fake-class Precision
+- Fake-class Recall
+- Fake-class F1
+
+**Weighted F1** is used as the primary aggregate comparison metric, while Fake-class measures are especially important under the imbalanced locked protocol.
 
 ---
 
-## 🚀 Current Extensions
+## 📈 Key Findings
 
-Current work includes:
+- **TituLLM 3B with SeqCLS + QLoRA** achieved the strongest balanced-test performance with **99.12% weighted F1**.
+- Under the stricter prevalence-preserving locked evaluation, TituLLM 3B achieved **97.90% weighted F1** and **92.94% Fake-class F1**.
+- **BanglaBERT remained highly competitive**, demonstrating that a compact Bengali-specific encoder can rival substantially larger causal LLMs.
+- Sequence-classification adaptation outperformed generative label prediction for every paired causal LLM evaluated.
+- Task-specific adaptation was substantially more effective than prompt-only inference.
+- Prompt revision affected models inconsistently, demonstrating measurable **prompt sensitivity**.
+- Provider-hosted LLMs remained below the strongest task-adapted models.
+- Ensemble methods were competitive but did not outperform the strongest individual models.
+- Model scale alone did not reliably predict classification performance.
 
-- Broader comparison of LLM adaptation strategies
-- Prompt-sensitivity evaluation
-- Provider-hosted LLM benchmarking
-- Error and misclassification analysis
-- Reliability and generalization analysis across evaluation settings
+---
+
+## 🔍 Error Analysis
+
+Manual inspection of misclassified examples identified several recurring challenges:
+
+- Negation interacting with promotional language
+- Very short reviews with limited contextual evidence
+- Genuine reviews written in promotional styles
+- Fake reviews written as convincing personal experiences
+- Shared lexical cues across Fake and Non-Fake classes
+- Conflicting textual evidence
+
+The results suggest that task-specific adaptation reduces many errors, while ambiguity in the textual boundary between genuine and deceptive reviews remains difficult.
+
+---
+
+## 🛡️ Leakage and Reproducibility Controls
+
+The locked evaluation includes several safeguards:
+
+- Exact duplicate removal
+- Near-duplicate grouping before partitioning
+- Group-aware train/validation/test splitting
+- Training-only augmentation
+- Training-only undersampling
+- Fixed random seeds
+- Locked-test isolation
+- Test-file SHA-256 verification
+- Stored model identifiers and inference settings
+- Deterministic label parsing for API evaluations
+
+---
+
+## 💻 Implementation
+
+Local experiments were conducted using:
+
+- Python
+- PyTorch
+- Hugging Face Transformers
+- PEFT
+- bitsandbytes
+- scikit-learn
+- pandas
+- NumPy
+- Google Colab
+- NVIDIA T4 GPU
+
+Parameter-efficient LLM adaptation was performed using **LoRA/QLoRA** where appropriate.
 
 ---
 
 ## 📁 Dataset
 
-Bengali Fake Review Dataset:  
+Bengali Fake Review Dataset:
+
 https://huggingface.co/datasets/shawon95/Bengali-Fake-Review-Dataset
 
-The original dataset is not included in this repository due to its licensing conditions.
+The original dataset contains:
+
+- **1,339 Fake reviews**
+- **7,710 Non-Fake reviews**
+- **9,049 reviews in total**
+
+### License
+
+The dataset is distributed under **CC BY-NC-ND 4.0**.
+
+The original dataset and generated review samples are **not redistributed** in this repository.
+
+This repository provides implementation and experimental code for research and educational purposes.
+
+---
+
+## 📝 Research Status
+
+The experimental study has been completed and the associated manuscript has been prepared for submission.
